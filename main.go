@@ -10,24 +10,19 @@ import (
 func main() {
 	nc, _ := nats.Connect(nats.DefaultURL)
 
-	//defer nc.Close()
-	nc.Publish("foo", []byte("Hello World"))
-	nc.Publish("foo", []byte("Hello World"))
+	go nc.Publish("foo", []byte("Hello World"))
+	go nc.Publish("foo", []byte("Hello World2"))
 
-	// Channel Subscriber
 	ch := make(chan *nats.Msg, 64)
 	sub, err := nc.ChanSubscribe("foo", ch)
 	if err != nil {
 		log.Fatalf("ERROR: %v", err)
 	}
-	//msg := <-ch
+
 	for msg := range ch {
 		fmt.Println(string(msg.Data))
 	}
 
-	// Unsubscribe
-	sub.Unsubscribe()
-
-	// Drain
-	sub.Drain()
+	defer sub.Unsubscribe()
+	defer sub.Drain()
 }
